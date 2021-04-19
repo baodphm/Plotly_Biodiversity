@@ -11,6 +11,7 @@ d3.json("samples.json").then(data => {
     data.names.forEach(name => {
         var option = idSelect.append("option");
         option.text(name);
+        option.property("value", name);
         });
     var initID = idSelect.property("value")
     plotCharts(initID);
@@ -63,6 +64,14 @@ function plotCharts(id) {
 
 d3.selectAll("#selDataset").on("change", updatePlotly);
 
+var drawChart = function(x_data, y_data, hoverText, metadata) {
+    var metadata_panel = d3.select("#sample-metadata");
+    metadata_panel.html("");
+    Object.entries(metadata).forEach(([key, value]) => {
+        metadata_panel.append("p").text('${key}; ${value}');
+    });
+}
+
 function updatePlotly(newdata) {
     Plotly.restyle('bar', "values", [newdata]);
     var drawChart = function(x_data, y_data, hoverText, metadata) {
@@ -105,34 +114,37 @@ function updatePlotly(newdata) {
                 return d;
             });
        };
-       var optionChanged = function(newValue) {
-        d3.json("samples.json").then(function(data) {
-        sample_new = data["samples"].filter(function(sample) {
-            return sample.id == newValue;
-        });
-        metadata_new = data["metadata"].filter(function(metadata) {
-            return metadata.id == newValue;
-        });
-        x_data = sample_new[0]["otu_ids"];
-        y_data = sample_new[0]["sample_values"];
-        hoverText = sample_new[0]["otu_labels"];
-        console.log(x_data);
-        console.log(y_data);
-        console.log(hoverText);
-        drawChart(x_data, y_data, hoverText, metadata_new[0]);
-        });
-       };
+       
        d3.json("samples.json").then(function(data) {
         //Populate dropdown with names
         populateDropdown(data["names"]);
         //Populate the page with the first value
-        x_data = data["samples"][0]["otu_ids"];
-        y_data = data["samples"][0]["sample_values"];
-        hoverText = data["samples"][0]["otu_labels"];
-        metadata = data["metadata"][0];
+        var x_data = data["samples"][0]["otu_ids"];
+        var y_data = data["samples"][0]["sample_values"];
+        var hoverText = data["samples"][0]["otu_labels"];
+        var metadata = data["metadata"][0];
         //Draw the chart on load
         drawChart(x_data, y_data, hoverText, metadata);
        });
 }
 
+var optionChanged = function(newValue) {
+    console.log(newValue);
+    d3.json("samples.json").then(function(data) {
+    sample_new = data["samples"].filter(function(sample) {
+        return sample.id == newValue;
+    });
+    metadata_new = data["metadata"].filter(function(metadata) {
+        return metadata.id == newValue;
+    });
+    
+    var x_data = sample_new[0]["otu_ids"];
+    var y_data = sample_new[0]["sample_values"];
+    var hoverText = sample_new[0]["otu_labels"];
+    console.log(x_data);
+    console.log(y_data);
+    console.log(hoverText);
+    drawChart(x_data, y_data, hoverText, metadata_new[0]);
+    });
+   };
 init();
