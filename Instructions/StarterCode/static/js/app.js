@@ -1,7 +1,7 @@
 var samplesJson = "samples.json"
 
 var idSelect = d3.select("#selDataset");
-var demoTable = d3.select("sample-metadata");
+var demoTable = d3.select("#sample-metadata");
 var barChart = d3.select("#bar");
 var bubbleChart = d3.select("#bubble");
 
@@ -20,7 +20,7 @@ d3.json("samples.json").then(data => {
 
 function plotCharts(id) {
     
-    //resetHtml();
+    resetHtml();
 
     d3.json("samples.json").then(data => {
         var individualMetadata = data.metadata.filter(participant => participant.id == id)[0];
@@ -30,7 +30,7 @@ function plotCharts(id) {
                 .attr("class","list-group");
             var listItem = demoList.append("li")
                 .attr("style", "list-style-type: none");
-            listItem.text('${key}; ${value}');
+            listItem.text(`${key}; ${value}`);
         });
         
         var individualSample = data.samples.filter(sample => sample.id == id)[0];
@@ -50,8 +50,8 @@ function plotCharts(id) {
     console.log(otuLabels)
     var data1 = [
         {
-        x: top10otuIDs,
-        y: top10otuSamples,
+        x: top10otuSamples,
+        y: top10otuIDs.map(otu => `OTU ${otu}`),
         text: top10otuLabels,
         type: 'bar',
         orientation: 'h'
@@ -68,22 +68,24 @@ var drawChart = function(x_data, y_data, hoverText, metadata) {
     var metadata_panel = d3.select("#sample-metadata");
     metadata_panel.html("");
     Object.entries(metadata).forEach(([key, value]) => {
-        metadata_panel.append("p").text('${key}; ${value}');
+        metadata_panel.append("p").text(`${key}; ${value}`);
     });
 }
 
 function updatePlotly(newdata) {
+
     Plotly.restyle('bar', "values", [newdata]);
     var drawChart = function(x_data, y_data, hoverText, metadata) {
         var metadata_panel = d3.select("#sample-metadata");
         metadata_panel.html("");
         Object.entries(metadata).forEach(([key, value]) => {
-            metadata_panel.append("p").text('${key}; ${value}');
+            metadata_panel.append("p").text(`${key}; ${value}`);
         });
+        
         var trace = {
-            x: x_data,
-            y: y_data,
-            text: hoverText,
+            x: x_data.slice(0,10).reverse(),
+            y: y_data.map(otu => `OTU ${otu}`).slice(0,10).reverse(),
+            text: hoverText.slice(0,10).reverse(),
             type: 'bar',
             orientation: 'h'
         };
@@ -128,7 +130,7 @@ function updatePlotly(newdata) {
        });
 }
 
-var optionChanged = function(newValue) {
+var optionChange = function(newValue) {
     console.log(newValue);
     d3.json("samples.json").then(function(data) {
     sample_new = data["samples"].filter(function(sample) {
@@ -145,6 +147,15 @@ var optionChanged = function(newValue) {
     console.log(y_data);
     console.log(hoverText);
     drawChart(x_data, y_data, hoverText, metadata_new[0]);
-    });
+     });
    };
+
+
+function resetHtml(){
+    demoTable.html("");
+}
+
+function optionChanged(id) {
+    plotCharts(id);
+}
 init();
